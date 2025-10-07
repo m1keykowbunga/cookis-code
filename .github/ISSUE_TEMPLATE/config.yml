@@ -1,0 +1,6 @@
+# config.yml
+blank_issues_enabled: false
+contact_links:
+  - name: Tarea de Gestión o Administrativa
+    url: https://github.com/m1keykowbunga/cookis-code/issues/new?assignees=m1keykowbunga&labels=Administrativo,Sprint%201
+    about: Si la tarea no encaja en Desarrollo, Diseño o Bug.
