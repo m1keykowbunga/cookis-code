@@ -8,7 +8,7 @@ blank_issues_enabled: false
 contact_links:
   # Enlace 1: Guía de Trazabilidad y Estándares de Codificación
   - name: 📝 Crear una Tarea (Feature, Bug o Spike)
-    url: https://github.com/m1keykowbunga/cookis-code/tree/master/.github/ISSUE_TEMPLATE
+    url: https://github.com/m1keykowbunga/cookis-code/tree/master/.github/ ISSUE_TEMPLATE
     about: Guía de Trazabilidad y Estándares de Codificación
 
   # Enlace 1: Enlace para Soporte y Consultas Generales
