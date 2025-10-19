@@ -1,0 +1,28 @@
+# Archivo: .github/ISSUE_TEMPLATE/config.yml
+
+# Deshabilitar la creación de issues en blanco para forzar el uso de las plantillas estandarizadas.
+blank_issues_enabled: false
+
+# Enlaces de Contacto y Guía
+# Estos enlaces aparecen en la parte inferior del selector de plantillas para guiar al usuario.
+contact_links:
+  # Enlace 1: Guía de Trazabilidad y Estándares de Codificación
+  - name: 📝 Crear una Tarea (Feature, Bug o Spike)
+    url: https://github.com/donPalitoJr/don-palito-management/tree/main/.github/ISSUE_TEMPLATE
+    about: Todas las tareas de desarrollo y gestión deben crearse en el repositorio de management para mantener la trazabilidad.
+
+  # Enlace 1: Enlace para Soporte y Consultas Generales
+  - name: 💬 Soporte y Consultas Generales
+    url: https://discord.gg/TuServidorDiscord
+    about: Si tienes preguntas generales sobre el proyecto o la gestión de Issues.
+
+    # Enlace 2: Enlace de Soporte Rápido (WhatsApp)
+  - name: 💬 Soporte y Consultas Generales (WhatsApp)
+    # ¡Reemplaza este enlace con el link de invitación real de tu grupo de WhatsApp!
+    url: https://chat.whatsapp.com/TuCodigoDeInvitacion
+    about: Si tienes preguntas rápidas o necesitas ayuda con la configuración, usa este canal.
+
+  # Enlace 3: Especificación de Requisitos (IEEE 830)
+  - name: 📜 Ver Especificación de Requisitos (SRS)
+    url: https://github.com/TuUsuario/TuRepositorio/blob/main/docs/management/SRS.md
+    about: Consulta los Requisitos Funcionales y No Funcionales del proyecto.
