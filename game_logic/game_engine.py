@@ -1,15 +1,17 @@
 # game_logic/game_engine.py
+
 import pygame
 import sys
-import os # Necesario para manipular variables de entorno del sistema
+import os 
+import random 
 
 # Importaciones del Proyecto
 # --------------------------------------------------------------------------
-from .settings import * # Importamos las constantes
-from .player import Player        # Para crear la nave del jugador
-from .camera import CameraHandler # Para manejar la cámara y el control por visión
-from .enemy import Enemy          # Para crear enemigos
-from .bullet import Bullet        # Importamos Bullet para crear y para la lógica de color
+from .settings import * # Importamos las constantes (incluyendo FPS, BULLET_PLAYER_COOLDOWN, ENEMY_SPAWN_COUNT, etc.)
+from .player import Player        
+from .camera import CameraHandler 
+from .enemy import Enemy          
+from .bullet import Bullet        
 # --------------------------------------------------------------------------
 
 class GameEngine:
@@ -24,8 +26,8 @@ class GameEngine:
     def __init__(self):
         if not hasattr(self,'initialized'):
             
-            # 1. Configuración de Entorno NO_DISPLAY
-            os.environ["SDL_VIDEODRIVER"] = "dummy"
+            # 1. Configuración de Entorno NO_DISPLAY (COMENTADA para permitir la ventana de OpenCV)
+            # os.environ["SDL_VIDEODRIVER"] = "dummy" 
             
             # 2. Inicialización de Pygame y Configuración base
             pygame.init()
@@ -43,14 +45,20 @@ class GameEngine:
             
             # Control de Disparo
             self.last_shot = pygame.time.get_ticks() 
-            self.shoot_delay = 500                  
+            self.shoot_delay = BULLET_PLAYER_COOLDOWN 
             
-            # Crea la nave y enemigos
+            # Crea la nave del jugador
             self.player = Player()           
             self.all_sprites.add(self.player)        
             
-            for i in range(5):
-                enemy = Enemy()
+            # Creación de enemigos
+            for i in range(ENEMY_SPAWN_COUNT): 
+                
+                enemy_x = random.randrange(0, SCREEN_WIDTH) 
+                enemy_y = random.randrange(50, SCREEN_HEIGHT // 4) 
+                
+                enemy = Enemy(enemy_x, enemy_y) 
+                
                 self.all_sprites.add(enemy)
                 self.enemies.add(enemy)
             
@@ -61,25 +69,20 @@ class GameEngine:
     # --- MÉTODOS DEL BUCLE PRINCIPAL ---
 
     def _handle_input(self):
-        """
-        Gestiona eventos (cerrar ventana) y la lógica de Disparo Automático.
-        """
+        """Gestiona eventos (cerrar ventana) y la lógica de Disparo Automático."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
         
-        # Lógica de Disparo Automático (usa el cooldown de 500ms)
+        # Lógica de Disparo Automático
         now = pygame.time.get_ticks()
         if now - self.last_shot > self.shoot_delay:
             self.last_shot = now
-            # La nave llama al método shoot, pasando los grupos
             self.player.shoot(self.all_sprites, self.bullets)
 
 
     def _update_game_state(self):
-        """
-        Actualiza el estado de todos los sprites y revisa las colisiones.
-        """
+        """Actualiza el estado de todos los sprites y revisa las colisiones."""
         self.all_sprites.update()
 
         # Colisión 1: Nave vs. Enemigos
@@ -89,47 +92,65 @@ class GameEngine:
             self.running = False
 
         # Colisión 2: Disparos vs. Enemigos
-        # Elimina la bala (True) y el enemigo (True)
         hits = pygame.sprite.groupcollide(self.bullets, self.enemies, True, True)
         
         if hits:
             print("Enemigo destruido!")
-            enemy = Enemy()
+            
+            enemy_x = random.randrange(0, SCREEN_WIDTH) 
+            enemy_y = random.randrange(50, SCREEN_HEIGHT // 4) 
+            
+            enemy = Enemy(enemy_x, enemy_y)
             self.all_sprites.add(enemy)
             self.enemies.add(enemy)
 
     def _draw_elements(self):
-        """
-        Función de dibujo de Pygame (vacía, ya que el dibujo lo hace OpenCV).
-        """
+        """Función de dibujo de Pygame (vacía)."""
         pass
     
+    # === MÉTODO RUN CON INVERSIÓN DE CONTROL (REF-01) ===
     def run(self):
-        # El método run estaba en el lugar correcto, no se toca.
-        print("Iniciando motor de juego (Lógica Pygame OK). Abriendo cámara...")
+        print("Iniciando motor de juego (Lógica Pygame OK). Tomando el control del bucle...")
         
         if not self.initialized:
             self.__init__()
         
-        self.camera_handler.run()
-        
+        # El bucle principal del juego reside AHORA aquí (REF-01)
+        while self.running:
+            
+            # 1. ENTRADA DEL JUGADOR (Teclado y Cámara)
+            self._handle_input()
+            
+            # Pedir posición a la cámara
+            detected_x = self.camera_handler.get_position() 
+            self.player.set_position_from_camera(detected_x)
+            
+            # 2. ACTUALIZACIÓN DEL ESTADO DEL JUEGO
+            self._update_game_state()
+            
+            # 3. DIBUJO (El motor pide a la cámara que dibuje el overlay)
+            sprites_data = self.get_sprites_data()
+            self.camera_handler.draw_overlay(sprites_data)
+            
+            # 4. CONTROL DE TIEMPO
+            self.clock.tick(FPS) 
+            
+        # Limpieza al salir del bucle
+        self.camera_handler.release_resources()
         pygame.quit()
         sys.exit()
     
     def get_sprites_data(self):
-        """
-        Retorna la posición de todos los sprites activos para el overlay de la cámara.
-        """
+        """Retorna la posición de todos los sprites activos para el overlay de la cámara."""
         data = []
         for sprite in self.all_sprites:
             
-            # Usamos las clases para determinar el color de cada sprite
             if isinstance(sprite, Player):
-                color = BLUE  # Nave del jugador
+                color = BLUE
             elif isinstance(sprite, Enemy):
-                color = RED   # Enemigo
+                color = RED
             elif isinstance(sprite, Bullet): 
-                color = YELLOW # Disparo
+                color = YELLOW
             else:
                 color = BLACK 
 

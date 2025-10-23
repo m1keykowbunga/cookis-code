@@ -28,8 +28,15 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_RIGHT]:
             self.rect.x += self.speed 
 
-    def set_position_from_camera(self, new_x_pos):
-        self.rect.centerx = new_x_pos
+    def set_position_from_camera(self, x_position):
+        """
+        Actualiza la posición X del jugador basada en la entrada de la cámara.
+        Se usa en GameEngine.run().
+        """
+        if x_position is not None:
+            # Asegura que la posición esté dentro de los límites de la pantalla
+            new_x = max(0, min(x_position, SCREEN_WIDTH))
+            self.rect.centerx = new_x
         
     def shoot(self, all_sprites, bullets):
         """
