@@ -2,24 +2,27 @@
 
 import pygame
 import random
-import time # Necesario para el cooldown de disparo
+import time 
 
-# Importar todas las constantes V2.0 necesarias
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, ENEMY_SPEED, RED, ENEMY_MAX_HEALTH, BULLET_DAMAGE_ENEMY 
-# Importar la clase de bala específica del enemigo
+# Importar todas las constantes necesarias y la clase EnemyBullet
+from .settings import (
+    SCREEN_WIDTH, SCREEN_HEIGHT, ENEMY_SPEED, RED, 
+    ENEMY_MAX_HEALTH, BULLET_DAMAGE_ENEMY, ENEMY_SHOOT_DELAY
+)
 from .bullet import EnemyBullet 
+
 
 class Enemy(pygame.sprite.Sprite):
     
-    # CORRECCIÓN CRÍTICA: Aceptar x, y para la posición
+    # CRÍTICO: El constructor debe aceptar x, y para que GameEngine controle la posición inicial.
     def __init__(self, x, y):
         super().__init__()
         
-        # 1. Componente de Visualización (Cambiado de 40x40 a 30x30 para mayor distinción)
+        # 1. Componente de Visualización
         self.image = pygame.Surface([40, 40])
         self.image.fill(RED)                  
         
-        # 2. Componente de Colisión y Posición (self.rect)
+        # 2. Componente de Colisión y Posición
         self.rect = self.image.get_rect()
         
         # CRÍTICO: Usar las coordenadas pasadas para la posición
@@ -29,27 +32,25 @@ class Enemy(pygame.sprite.Sprite):
         # 3. Movimiento
         self.speed = ENEMY_SPEED
         
-        # 4. LÓGICA DE SALUD (DEV-04, DEV-05)
+        # 4. LÓGICA DE SALUD (Añadida desde HEAD)
         self.max_health = ENEMY_MAX_HEALTH
         self.health = ENEMY_MAX_HEALTH
         
-        # 5. LÓGICA DE DISPARO (DEV-03)
+        # 5. LÓGICA DE DISPARO (Añadida desde HEAD)
         self.last_shot = pygame.time.get_ticks() 
-        self.shoot_delay = 3500 # Dispara cada 1.5 segundos
-        self.bullet_speed = 5
-        
+        self.shoot_delay = ENEMY_SHOOT_DELAY # Usar constante si existe, sino 3500ms
+        self.bullet_speed = ENEMY_SPEED + 1 # Una velocidad ligeramente superior a la del enemigo
+
     def update(self):
         """
-        Lógica que se ejecuta en cada fotograma para mover el enemigo y reiniciarlo.
+        Mueve el enemigo hacia abajo y lo elimina si sale de la pantalla.
         """
         # Mueve el enemigo hacia abajo
         self.rect.y += self.speed
         
-        # Si sale de la pantalla, reinicia la posición
+        # Si sale de la pantalla, se elimina. GameEngine se encarga de reemplazarlo.
         if self.rect.top > SCREEN_HEIGHT:
-             # Lo reiniciamos completamente para simular que un nuevo enemigo entró
              self.kill() 
-             # Nota: GameEngine es responsable de crear un reemplazo.
 
     # --- NUEVOS MÉTODOS V2.0 ---
     
@@ -65,15 +66,19 @@ class Enemy(pygame.sprite.Sprite):
         
     def fire(self, all_sprites_group, enemy_bullets_group):
         """
-        Dispara una bala si el cooldown lo permite (DEV-03).
+        Dispara una bala si el cooldown lo permite (Añadido desde HEAD).
         """
         now = pygame.time.get_ticks()
         if now - self.last_shot > self.shoot_delay:
             self.last_shot = now
             
             # Crea una bala específica del enemigo
-            bullet = EnemyBullet(self.rect.centerx, self.rect.bottom, self.bullet_speed)
+            bullet = EnemyBullet(self.rect.centerx, self.rect.bottom) 
             
             # Añade la bala a ambos grupos
             all_sprites_group.add(bullet)
             enemy_bullets_group.add(bullet)
+
+    # Nota: Es crucial que la clase EnemyBullet no reciba 'self.bullet_speed' en su __init__
+    # a menos que su definición en 'bullet.py' se haya modificado para aceptarla.
+    # Se asume que usa la velocidad por defecto.
