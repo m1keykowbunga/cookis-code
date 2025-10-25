@@ -5,7 +5,7 @@
 # =================================================================
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-FPS = 60 # Frames por segundo del motor de juego
+FPS = 100 # Frames por segundo del motor de juego
 
 # =================================================================
 # 2. COLORES (Pygame)
@@ -19,7 +19,7 @@ YELLOW = (255, 255, 0)
 # =================================================================
 # 3. CONFIGURACIÓN DEL JUGADOR (Player)
 # =================================================================
-PLAYER_SPEED = 5        # Píxeles que se mueve la nave por ciclo de juego
+PLAYER_SPEED = 7        # Píxeles que se mueve la nave por ciclo de juego
 PLAYER_MAX_HEALTH = 100 # Salud máxima inicial del jugador
 
 # Daños de colisión (Valores 'hardcodeados' que deben centralizarse)
@@ -32,7 +32,7 @@ PLAYER_ENEMY_BULLET_DAMAGE = 10    # Daño que un disparo enemigo hace al jugado
 ENEMY_SPEED = 2           # Píxeles que se mueve el enemigo por ciclo de juego
 ENEMY_MAX_HEALTH = 30     # **CORREGIDO** - Salud que tendrá el enemigo (Causó el ImportError)
 ENEMY_SPAWN_COUNT = 5     # Cuántos enemigos se generan al inicio
-ENEMY_SHOOT_DELAY = 1500  # [MS] Frecuencia de disparo del enemigo (si aplica)
+ENEMY_SHOOT_DELAY = 3500  # [MS] Frecuencia de disparo del enemigo (si aplica)
 
 # =================================================================
 # 5. CONFIGURACIÓN DE DISPAROS (Bullet)
@@ -61,7 +61,7 @@ RED_UPPER_H2 = (180, 255, 255)
 
 # --- RANGO VERDE (Recomendado para REF-02) ---
 # Ya que el rojo es complejo, recomendamos usar VERDE para la Tarea REF-02
-RED_LOWER = (0, 50, 50)  # Ejemplo de rango Verde
+RED_LOWER = (0, 100, 100)  # Ejemplo de rango Verde
 RED_UPPER = (10, 255, 255)
 
 # --- CONFIGURACIÓN DE SUAVIZADO (REF-02) ---
