@@ -224,6 +224,15 @@ class GameMenu:
         
         print("Estado del juego reiniciado")
     
+    # CRÍTICO: NUEVO MÉTODO PARA ENTRADA DE OPENCV
+    def handle_input_cv2(self, cv2_key_code):
+        """
+        Recibe el código de tecla ASCII/CV2 y lo pasa al manejador principal.
+        """
+        # cv2.waitKey devuelve el valor ASCII de la tecla presionada.
+        # Simplemente pasamos ese valor al handle_input original.
+        return self.handle_input(cv2_key_code)
+    
     def is_playing(self):
         """
         Retorna True si el juego está en estado PLAYING.
