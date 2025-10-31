@@ -2,41 +2,83 @@
 
 import pygame
 import random
-# Asegúrate de que SCREEN_HEIGHT esté importada aquí
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, ENEMY_SPEED, RED 
+import time 
+
+# Importar todas las constantes necesarias y la clase EnemyBullet
+from .settings import (
+    SCREEN_WIDTH, SCREEN_HEIGHT, ENEMY_SPEED, RED, 
+    ENEMY_MAX_HEALTH, BULLET_DAMAGE_ENEMY, ENEMY_SHOOT_DELAY
+)
+from .bullet import EnemyBullet 
+
 
 class Enemy(pygame.sprite.Sprite):
     
-    def __init__(self):
-        # Es necesario llamar al constructor de la clase padre (Sprite)
+    # CRÍTICO: El constructor debe aceptar x, y para que GameEngine controle la posición inicial.
+    def __init__(self, x, y):
         super().__init__()
         
-        # 1. Componente de Visualización 
+        # 1. Componente de Visualización
         self.image = pygame.Surface([40, 40])
         self.image.fill(RED)                  
         
-        # 2. Componente de Colisión y Posición (self.rect)
-        self.rect = self.image.get_rect() 
+        # 2. Componente de Colisión y Posición
+        self.rect = self.image.get_rect()
         
-        # 3. Posición Inicial (aleatoria en la parte superior)
-        # Ajustamos el margen para que sean visibles inmediatamente en el overlay
-        self.rect.x = random.randrange(SCREEN_WIDTH - self.rect.width) 
-        self.rect.y = random.randrange(-120, -40)                      
+        # CRÍTICO: Usar las coordenadas pasadas para la posición
+        self.rect.x = x
+        self.rect.y = y                      
         
-        # 4. Movimiento
+        # 3. Movimiento
         self.speed = ENEMY_SPEED
+        
+        # 4. LÓGICA DE SALUD (Añadida desde HEAD)
+        self.max_health = ENEMY_MAX_HEALTH
+        self.health = ENEMY_MAX_HEALTH
+        
+        # 5. LÓGICA DE DISPARO (Añadida desde HEAD)
+        self.last_shot = pygame.time.get_ticks() 
+        self.shoot_delay = ENEMY_SHOOT_DELAY # Usar constante si existe, sino 3500ms
+        self.bullet_speed = ENEMY_SPEED + 1 # Una velocidad ligeramente superior a la del enemigo
 
     def update(self):
         """
-        Lógica que se ejecuta en cada fotograma para mover el enemigo y reiniciarlo.
+        Mueve el enemigo hacia abajo y lo elimina si sale de la pantalla.
         """
         # Mueve el enemigo hacia abajo
         self.rect.y += self.speed
         
-        # CRÍTICO: Usamos la constante SCREEN_HEIGHT para evitar el AttributeError
-        # Si el borde superior del enemigo pasa el borde inferior de la pantalla:
+        # Si sale de la pantalla, se elimina. GameEngine se encarga de reemplazarlo.
         if self.rect.top > SCREEN_HEIGHT:
-             # Reinicia el enemigo en una nueva posición X aleatoria
-             self.rect.x = random.randrange(SCREEN_WIDTH - self.rect.width)
-             # Reinicia el enemigo en la zona invisible superior
-             self.rect.y = random.randrange(-120, -40)
+             self.kill() 
+
+    # --- NUEVOS MÉTODOS V2.0 ---
+    
+    def take_damage(self, damage):
+        """
+        Reduce la salud del enemigo. Retorna True si el enemigo murió, False si sobrevive.
+        """
+        self.health -= damage
+        if self.health <= 0:
+            self.kill() # Elimina el sprite de todos los grupos
+            return True
+        return False
+        
+    def fire(self, all_sprites_group, enemy_bullets_group):
+        """
+        Dispara una bala si el cooldown lo permite (Añadido desde HEAD).
+        """
+        now = pygame.time.get_ticks()
+        if now - self.last_shot > self.shoot_delay:
+            self.last_shot = now
+            
+            # Crea una bala específica del enemigo
+            bullet = EnemyBullet(self.rect.centerx, self.rect.bottom) 
+            
+            # Añade la bala a ambos grupos
+            all_sprites_group.add(bullet)
+            enemy_bullets_group.add(bullet)
+
+    # Nota: Es crucial que la clase EnemyBullet no reciba 'self.bullet_speed' en su __init__
+    # a menos que su definición en 'bullet.py' se haya modificado para aceptarla.
+    # Se asume que usa la velocidad por defecto.
