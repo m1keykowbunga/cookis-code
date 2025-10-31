@@ -1,6 +1,5 @@
-# game_logic/player.py
-
 import pygame
+# Importamos todas las constantes necesarias
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, PLAYER_SPEED, BLUE 
 from .bullet import Bullet 
 
@@ -12,31 +11,34 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.Surface([50, 50]) 
         self.image.fill(BLUE) 
         self.rect = self.image.get_rect() 
-        self.rect.centerx = SCREEN_WIDTH // 2 
-        self.rect.bottom = SCREEN_HEIGHT - 10 
+        
+        self.rect.bottom = int(SCREEN_HEIGHT * 1.0)  
         self.speed = PLAYER_SPEED 
 
     def update(self):
+        """Actualiza la posición X del jugador basada en la entrada CV."""
+        # LÍMITES HORIZONTALES (Redundantes si se usa set_position_from_camera, pero seguros)
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > SCREEN_WIDTH:
             self.rect.right = SCREEN_WIDTH
 
-    def handle_movement_input(self, keys):
-        if keys[pygame.K_LEFT]:
-            self.rect.x -= self.speed 
-        if keys[pygame.K_RIGHT]:
-            self.rect.x += self.speed 
+        # LÍMITES VERTICALES (Asegura que la nave esté en el borde inferior)
+        if self.rect.bottom > SCREEN_HEIGHT:
+            self.rect.bottom = SCREEN_HEIGHT
+
+    
 
     def set_position_from_camera(self, x_position):
         """
-        Actualiza la posición X del jugador basada en la entrada de la cámara.
-        Se usa en GameEngine.run().
+        Actualiza la posición X del jugador basada en la entrada de la cámara,
+        asegurando que permanezca dentro de los límites de la pantalla Pygame.
         """
         if x_position is not None:
-            # Asegura que la posición esté dentro de los límites de la pantalla
-            new_x = max(0, min(x_position, SCREEN_WIDTH))
-            self.rect.centerx = new_x
+            # Asegura que la posición (el centro del sprite) esté dentro de [0, SCREEN_WIDTH]
+            new_center_x = max(self.rect.width // 2, min(x_position, SCREEN_WIDTH - self.rect.width // 2))
+            
+            self.rect.centerx = new_center_x
         
     def shoot(self, all_sprites, bullets):
         """
