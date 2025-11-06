@@ -117,7 +117,7 @@ class GameEngine:
         self.all_sprites.update()
         
         #here bugs for presentecion
-        #self.player.rect.bottom = SCREEN_HEIGHT
+        self.player.rect.bottom = SCREEN_HEIGHT
         
         print(f"Posición final del jugador: Y={self.player.rect.bottom}, X={self.player.rect.centerx}")
 
