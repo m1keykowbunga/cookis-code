@@ -114,36 +114,44 @@ class GameEngine:
                 self.player.set_position_from_camera(player_x)
 
     def _update_game_state(self):
-        """Actualiza el estado de todos los sprites y revisa las colisiones."""
+        """Actualiza el estado de todos los sprites y revisa las colisiones (SCORE & HEALTH integrados)."""
         if not self.menu.is_playing():
             return
         
         if self.is_paused:
-            
-             #here bugs for presentecion
             self.player.rect.bottom = SCREEN_HEIGHT
             return
         
-         # Actualiza todos los sprites
-
+        # Actualiza todos los sprites
         self.all_sprites.update()
         
-         #here bugs for presentecion
+        # Asegura la posición del jugador al fondo (ajuste visual)
         self.player.rect.bottom = SCREEN_HEIGHT
         
         
-       # print(f"Posición final del jugador: Y={self.player.rect.bottom}, X={self.player.rect.centerx}")
-
-        # Colisiones
-        hits = pygame.sprite.spritecollide(self.player, self.enemies, False)
-        if hits:
-            self.menu.game_over()
-
-        hits = pygame.sprite.groupcollide(self.bullets, self.enemies, True, True)
-        if hits:
-            self.score += 10
-            self._spawn_enemy()
-
+        # -----------------------------------------------------------------
+        # 🛡️ 1. Colisiones de Enemigos con el Jugador (LÓGICA DE VIDA)
+        # -----------------------------------------------------------------
+        # True: El enemigo que choca se destruye
+        player_hits = pygame.sprite.spritecollide(self.player, self.enemies, True) 
+        if player_hits:
+            if self.player.take_damage(): # reduce la vida y chequea si es <= 0
+                self.menu.game_over()
+            
+        # -----------------------------------------------------------------
+        # 💰 2. Colisiones de Balas con Enemigos (LÓGICA DE PUNTUACIÓN)
+        # -----------------------------------------------------------------
+        # True: Las balas y los enemigos golpeados se destruyen
+        enemy_hits = pygame.sprite.groupcollide(self.bullets, self.enemies, True, True)
+        
+        if enemy_hits:
+            enemies_destroyed = sum(len(enemies) for enemies in enemy_hits.values())
+            self.score += (enemies_destroyed * 10) 
+            
+            # Reponer los enemigos
+            for _ in range(enemies_destroyed):
+                self._spawn_enemy()
+                
     def run(self):
         """Método principal: implementa el bucle de juego y controla el flujo."""
         print("Iniciando motor de juego (Lógica Pygame OK). Abriendo cámara...")

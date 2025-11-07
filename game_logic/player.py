@@ -14,6 +14,11 @@ class Player(pygame.sprite.Sprite):
         
         self.rect.bottom = int(SCREEN_HEIGHT * 1.0)  
         self.speed = PLAYER_SPEED 
+        
+        self.health = 100
+        self.max_health = 100
+        
+        
 
     def update(self):
         """Actualiza la posición X del jugador basada en la entrada CV."""
@@ -48,3 +53,12 @@ class Player(pygame.sprite.Sprite):
         
         all_sprites.add(new_bullet)
         bullets.add(new_bullet)
+        
+    def take_damage(self):
+        """Disminuye la salud del jugador."""
+        self.health -= 1
+        if self.health <= 0:
+            # Puedes añadir lógica de destrucción aquí si es necesario
+            self.kill() # Elimina el sprite si la vida llega a cero
+            return True # Indica que el jugador murió
+        return False # Indica que el jugador sobrevivió al golpe

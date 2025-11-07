@@ -134,6 +134,9 @@ class CameraHandler:
                 color_bgr = (color[2], color[1], color[0]) 
 
                 cv2.rectangle(frame_to_display, (cam_x1, cam_y1), (cam_x2, cam_y2), color_bgr, 2)
+                
+            self._draw_score(frame_to_display, self.CAM_WIDTH, self.CAM_HEIGHT)
+            self._draw_health_bar(frame_to_display, self.CAM_WIDTH, self.CAM_HEIGHT)
         
         # 2. Dibujar Menús (GAME_OVER, MENU, OPTIONS)
         if not self.game_engine.menu.is_playing() or self.game_engine.is_paused:
@@ -156,3 +159,44 @@ class CameraHandler:
         if self.cap:
              self.cap.release()
         cv2.destroyAllWindows()
+        
+    #marcador de puntuación
+    def _draw_score(self, frame, cam_width, cam_height):
+        """Dibuja el marcador de puntuación en la esquina superior."""
+        score_text = f"PUNTOS: {self.game_engine.score}"
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        
+        # Coordenadas: Arriba a la derecha (Margen de 20px)
+        text_size = cv2.getTextSize(score_text, font, 0.7, 2)[0]
+        text_x = cam_width - text_size[0] - 20
+        text_y = 30
+        
+        cv2.putText(frame, score_text, (text_x, text_y), font, 0.7, (255, 255, 255), 2) # Blanco
+        
+    def _draw_health_bar(self, frame, cam_width, cam_height):
+        """Dibuja la barra de vida del jugador (nave azul) en la esquina inferior izquierda."""
+        player = self.game_engine.player
+        
+        # Chequeo CRÍTICO: Asegurarse de que el objeto player exista y tenga salud.
+        if player is None or not hasattr(player, 'health') or player.health <= 0:
+            return
+            
+        health_ratio = player.health / player.max_health
+        bar_width = cam_width // 4 
+        bar_height = 15
+        
+        # Posición: Abajo a la izquierda (Margen de 20px)
+        x = 20
+        y = cam_height - bar_height - 20
+        
+        # Dibujar Fondo (Rojo) (BGR: 0, 0, 255)
+        cv2.rectangle(frame, (x, y), (x + bar_width, y + bar_height), (0, 0, 255), -1) 
+        
+        # Dibujar Vida Actual (Verde) (BGR: 0, 255, 0)
+        fill_width = int(bar_width * health_ratio)
+        cv2.rectangle(frame, (x, y), (x + fill_width, y + bar_height), (0, 255, 0), -1) 
+        
+        # Dibujar Borde (Blanco) (BGR: 255, 255, 255)
+        cv2.rectangle(frame, (x, y), (x + bar_width, y + bar_height), (255, 255, 255), 2)
+        
+        
