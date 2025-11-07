@@ -52,6 +52,9 @@ class GameEngine:
 
             # 7. CREACIÓN DEL SISTEMA DE MENÚ
             self.menu = GameMenu(self)
+            
+            #estado pausa del juego
+            self.is_paused = False
 
     def _spawn_enemy(self):
         """Método auxiliar para crear y añadir un enemigo con posición aleatoria."""
@@ -97,12 +100,13 @@ class GameEngine:
 
     def _handle_input(self):
         """Gestiona la lógica de Disparo Automático."""
-        if self.menu.is_playing():
+        if self.menu.is_playing() and not self.is_paused:
             now = pygame.time.get_ticks()
             if now - self.last_shot > self.shoot_delay:
                 self.last_shot = now
                 self.player.shoot(self.all_sprites, self.bullets)
-
+        
+                    
     def _process_camera_data(self, player_x):
         """Llama a la cámara para obtener la posición y actualiza al jugador."""
         if self.menu.is_playing() and self.player: 
@@ -113,13 +117,22 @@ class GameEngine:
         """Actualiza el estado de todos los sprites y revisa las colisiones."""
         if not self.menu.is_playing():
             return
+        
+        if self.is_paused:
+            
+             #here bugs for presentecion
+            self.player.rect.bottom = SCREEN_HEIGHT
+            return
+        
+         # Actualiza todos los sprites
 
         self.all_sprites.update()
         
-        #here bugs for presentecion
+         #here bugs for presentecion
         self.player.rect.bottom = SCREEN_HEIGHT
         
-        print(f"Posición final del jugador: Y={self.player.rect.bottom}, X={self.player.rect.centerx}")
+        
+       # print(f"Posición final del jugador: Y={self.player.rect.bottom}, X={self.player.rect.centerx}")
 
         # Colisiones
         hits = pygame.sprite.spritecollide(self.player, self.enemies, False)
@@ -143,17 +156,25 @@ class GameEngine:
             # Mantenemos pump() aquí para asegurar que Pygame esté activo.
             pygame.event.pump()
             self.clock.tick(FPS)
+            
 
             # Procesar eventos Pygame normales (solo necesitamos QUIT)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                    
+                    
+                #tecla Pausa
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_p:
+                        if self.menu.is_playing():
+                            self.is_paused = not self.is_paused
 
                 # Intentamos pasar los eventos a Pygame Menu por si acaso funciona en el sistema del usuario
                 # (Aunque la entrada de CV2 es la que usamos para la navegación forzada)
-                menu_action = self.menu.handle_input(event)
-                if menu_action == "QUIT":
-                    self.running = False
+               # menu_action = self.menu.handle_input(event)
+               # if menu_action == "QUIT":
+                #    self.running = False
 
             # 2. Lógica del Juego (Solo si estamos jugando)
             player_x = self.camera_handler.get_position()
@@ -168,13 +189,14 @@ class GameEngine:
 
             # 3. DIBUJO Y OBTENCIÓN DE LA TECLA CV2 (CRÍTICO)
             sprites_data = self.get_sprites_data()
-
+            
+    
             # Una sola llamada: dibuja la ventana y obtiene la tecla pulsada.
             key_cv2 = self.camera_handler.draw_window(sprites_data)
 
             # 4. Procesamiento de la Tecla CV2 (Navegación Forzada)
             # Usamos el valor de la tecla CV2 para simular la entrada del menú.
-            if not self.menu.is_playing():
+            if not self.menu.is_playing() or self.is_paused:
                 # Mapeo de ASCII (CV2) a Eventos de Pygame para el menú
                 # 119='w' (Arriba), 115='s' (Abajo), 13=ENTER (Seleccionar), 27=ESCAPE (Volver)
                 if key_cv2 == ord('w'):
@@ -184,7 +206,12 @@ class GameEngine:
                 elif key_cv2 == 13:
                     self.menu.handle_input_cv2_shim(pygame.K_RETURN)
                 elif key_cv2 == 27:
-                    self.menu.handle_input_cv2_shim(pygame.K_ESCAPE)
+                    if not self.is_paused:
+                        self.menu.handle_input_cv2_shim(pygame.K_ESCAPE)
+                    
+            if self.menu.is_playing() and key_cv2 == ord('p'):
+                 self.is_paused = not self.is_paused
+                 print(f"DEBUG: Pausa activada por CV2: {self.is_paused}")
 
         # Limpieza final (FUERA DEL BUCLE)
         self.camera_handler.release_resources()
@@ -195,6 +222,9 @@ class GameEngine:
         """Retorna la posición de todos los sprites activos para el overlay de la cámara."""
         data = []
         for sprite in self.all_sprites:
+            
+            if self.is_paused and not isinstance(sprite, Player):
+                continue
             # ... (Lógica de color y recolección de datos sin cambios)
             if isinstance(sprite, Player):
                 color = (0, 0, 255)  # BLUE

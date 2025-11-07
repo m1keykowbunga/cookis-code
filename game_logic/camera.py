@@ -112,14 +112,14 @@ class CameraHandler:
     def draw_window(self, sprites_data):
         """Aplica el overlay de sprites/menú al frame actual y lo muestra con CV2."""
         if self.current_frame is None:
-            return
+            return 0
 
         # Ajuste de tamaño de la ventana de CV2 si es necesario (No es estrictamente necesario,
         # pero asegura que la ventana de CV2 muestre la resolución correcta)
         frame_to_display = self.current_frame.copy()
         
         # 1. Lógica para dibujar Sprites del Juego
-        if self.game_engine.menu.is_playing():
+        if self.game_engine.menu.is_playing() and not self.game_engine.is_paused:
             for data in sprites_data:
                 rect = data['rect']
                 color = data['color']
@@ -136,7 +136,7 @@ class CameraHandler:
                 cv2.rectangle(frame_to_display, (cam_x1, cam_y1), (cam_x2, cam_y2), color_bgr, 2)
         
         # 2. Dibujar Menús (GAME_OVER, MENU, OPTIONS)
-        if not self.game_engine.menu.is_playing():
+        if not self.game_engine.menu.is_playing() or self.game_engine.is_paused:
             # El menú necesita saber el tamaño de la ventana de CV2 para dibujar su contenido.
             # Le pasamos el tamaño actual de la cámara como argumento.
             self.game_engine.menu.draw(frame_to_display, self.CAM_WIDTH, self.CAM_HEIGHT)

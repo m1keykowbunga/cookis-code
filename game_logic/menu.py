@@ -28,10 +28,13 @@ class GameMenu:
         
         self.game_over_options = ["REINICIAR", "MENU PRINCIPAL", "SALIR"] 
         
+        self.pause_options = ["CONTINUAR...", "MENU PRINCIPAL"]
+        
         # CRÍTICO: Las opciones de pantalla se toman directamente de settings.py
         self.screen_menu_options = SCREEN_SIZE_OPTIONS
         
         self.selected_option = 0
+        self.pause_selected_option = 0      
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.font_scale = 1.0
         self.thickness = 2
@@ -42,6 +45,11 @@ class GameMenu:
         Método central de dibujo llamado por GameEngine (Alta Cohesión).
         Recibe las dimensiones reales de la ventana CV2 para el centrado.
         """
+        # Maneja la pantalla de pausa
+        if self.is_playing() and self.game.is_paused:
+            self.draw_pause(frame, cam_width, cam_height)
+            return
+        
         if self.current_state == "MENU":
             self.draw_menu(frame, cam_width, cam_height)
         elif self.current_state == "OPTIONS":
@@ -191,7 +199,44 @@ class GameMenu:
             
             cv2.putText(frame, option, (text_x, text_y), self.font, self.font_scale, color, self.thickness)
     
-    # ... (handle_input y el resto de los métodos permanecen sin cambios) ...
+
+    def draw_pause(self, frame, cam_width, cam_height):
+        """
+        Dibuja la pantalla de Pausa, incluyendo las opciones para continuar o volver al menú.
+        """
+        # Fondo semi-transparente (similar a Game Over)
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (0, 0), (cam_width, cam_height), (0, 0, 0), -1)
+        cv2.addWeighted(overlay, 0.8, frame, 0.2, 0, frame)
+        
+        # Texto PAUSA
+        pause_text = "PAUSA"
+        text_size = cv2.getTextSize(pause_text, self.font, 2.0, 4)[0]
+        text_x = (cam_width - text_size[0]) // 2
+        text_y = cam_height // 2 - 100 # Movemos el título más arriba
+        cv2.putText(frame, pause_text, (text_x, text_y), self.font, 2.0, YELLOW, 4)
+        
+        # Opciones de Pausa
+        for i, option in enumerate(self.pause_options):
+            color = BLUE if i == self.pause_selected_option else WHITE
+            text_size = cv2.getTextSize(option, self.font, self.font_scale, self.thickness)[0]
+            text_x = (cam_width - text_size[0]) // 2
+            text_y = cam_height // 2 + i * 50 # Dibujamos las opciones
+            
+            # Resaltar la opción seleccionada
+            if i == self.pause_selected_option:
+                padding = 10
+                cv2.rectangle(frame, 
+                            (text_x - padding, text_y - text_size[1] - padding),
+                            (text_x + text_size[0] + padding, text_y + padding),
+                            YELLOW, 2)
+            
+            cv2.putText(frame, option, (text_x, text_y), self.font, self.font_scale, color, self.thickness)
+
+        # Indicador de selección (opcional, pero ayuda)
+        indicator_text = ">>"
+        cv2.putText(frame, indicator_text, (text_x - 70, cam_height // 2 + self.pause_selected_option * 50), 
+                   self.font, self.font_scale, YELLOW, self.thickness)
 
     def handle_input(self, event):
         """
@@ -207,6 +252,8 @@ class GameMenu:
             return None
         
         key = event.key
+        
+
         
         # Lógica de navegación (W/S) y selección (Espacio/Enter)
         if self.current_state == "MENU":
@@ -259,6 +306,31 @@ class GameMenu:
                     self.return_to_menu()
                 elif self.selected_option == 2:  # SALIR
                     return "QUIT"
+        # ... (Después de la lógica de GAME_OVER) ...
+
+        # BLOQUE: Manejo de entrada cuando está en Pausa (Sub-estado de PLAYING)
+        if self.is_playing() and self.game.is_paused:
+            num_options = len(self.pause_options)
+            
+            if key == pygame.K_w:
+                self.pause_selected_option = (self.pause_selected_option - 1) % num_options
+            elif key == pygame.K_s:
+                self.pause_selected_option = (self.pause_selected_option + 1) % num_options
+            elif key == pygame.K_SPACE or key == pygame.K_RETURN:
+                if self.pause_selected_option == 0: # CONTINUAR
+                    # 1. Quitar la pausa
+                    self.game.is_paused = False
+                    # 2. Resetear el puntero
+                    self.pause_selected_option = 0
+                elif self.pause_selected_option == 1: # VOLVER AL MENU PRINCIPAL
+                    # 1. Quitar la pausa
+                    self.game.is_paused = False
+                    # 2. Reiniciar el estado del juego (para limpiar enemigos y puntuación)
+                    self.reset_game_state() 
+                    # 3. Regresar al menú principal
+                    self.return_to_menu() 
+                  
+                
         
         return None
     
